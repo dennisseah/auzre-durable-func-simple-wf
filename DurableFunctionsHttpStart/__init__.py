@@ -1,10 +1,3 @@
-# This function an HTTP starter function for Durable Functions.
-# Before running this sample, please:
-# - create a Durable orchestration function
-# - create a Durable activity function (default name is "Hello")
-# - add azure-functions-durable to requirements.txt
-# - run pip install -r requirements.txt
-
 import json
 import logging
 
@@ -14,9 +7,13 @@ import azure.durable_functions as df
 
 async def main(req: func.HttpRequest, starter: str) -> func.HttpResponse:
     client = df.DurableOrchestrationClient(starter)
+    fn_name = req.route_params["functionName"]
 
-    urls = json.loads(req.get_body())
-    instance_id = await client.start_new(req.route_params["functionName"], None, {"urls": urls})
-
+    if fn_name == "Orchestrator":
+        urls = json.loads(req.get_body())
+        instance_id = await client.start_new(fn_name, None, {"urls": urls})
+    else:
+        instance_id = await client.start_new(fn_name, None, None)
+        
     logging.info(f"Started orchestration with ID = '{instance_id}'.")
     return client.create_check_status_response(req, instance_id)
